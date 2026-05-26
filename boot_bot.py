@@ -1,6 +1,6 @@
 import telebot, time, requests, subprocess
-from telebot.types import Message
-from secret import BOT_API, IP, ADMIN_CHAT_IDS
+from telebot.types import Message, User
+from secret import BOT_API, IP, ADMIN_CHAT_IDS, USERNAME
 
 
 bot = telebot.TeleBot(BOT_API)
@@ -17,7 +17,11 @@ def request_wol(mac_address):
 
 def perform_action(message: Message):
     print(f"[{time.strftime('%H:%M:%S')}] Команда получена от пользователя {message.chat.id}.")
-    mac = message.text.split(' ')[1]
+    try:
+        mac = message.text.split(' ')[1]
+    except Exception as e:
+        mac = ''
+        bot.send_message(message.chat.id, "Provide a valid MAC adress: /boot XX:XX:XX:XX:XX:XX")
     #print(mac)
     if message.chat.id in ADMIN_CHAT_IDS:
         status = request_wol(mac)
@@ -28,8 +32,8 @@ def perform_action(message: Message):
             print(f"ERROR: {status}")
             bot.send_message(message.chat.id, f"Boot request error {status}")
     else:
-        bot.send_message(message.chat.id, "Неправильный пользователь. @Akula_nad")
-        print(f"неавторизованная попытка запуска от {message.chat.id}")
+        bot.send_message(message.chat.id, f"Неправильный пользователь. {USERNAME}")
+        print(f"[{time.strftime('%H:%M:%S')}] неавторизованная попытка запуска от: \n{message.from_user.first_name} Username: {message.from_user.username}({message.from_user.id})")
     print(f"[{time.strftime('%H:%M:%S')}] Действие завершено. Бот снова спит в ожидании.")
 
 
