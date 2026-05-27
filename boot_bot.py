@@ -33,7 +33,7 @@ def perform_action(message: Message):
             bot.send_message(message.chat.id, f"Boot request error {status}")
     else:
         bot.send_message(message.chat.id, f"Неправильный пользователь. {USERNAME}")
-        print(f"[{time.strftime('%H:%M:%S')}] неавторизованная попытка запуска от: \n{message.from_user.first_name} Username: {message.from_user.username}({message.from_user.id})")
+        print(f"[{time.strftime('%H:%M:%S')}] неавторизованная попытка запуска от: \n{message.from_user.first_name} Username: @{message.from_user.username}({message.from_user.id})")
     print(f"[{time.strftime('%H:%M:%S')}] Действие завершено. Бот снова спит в ожидании.")
 
 
