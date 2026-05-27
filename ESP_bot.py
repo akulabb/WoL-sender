@@ -1,9 +1,12 @@
+import gc
 import network, socket, re
 import time
 import utelegram as utg
 from secret import IP, WIFI_SSID, WIFI_PASSWORD, BOT_API, ADMIN_CHAT_IDS, USERNAME
 
 bot = utg.ubot(BOT_API)
+
+
 
 wlan = network.WLAN(network.STA_IF)
 wlan.active(True)
@@ -14,8 +17,29 @@ if not wlan.isconnected():
         pass
 print("Wi-Fi подключен! IP-адрес:", wlan.ifconfig()[0])
 
+def check_server_status(timeout=None):
+    sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    sock.bind(('0.0.0.0', 9000))
+    sock.settimeout(timeout)
 
-# 2. Функция отправки Magic Packet (WoL)
+    print("created socket, waiting for server...")
+    try:
+        data, addr = sock.recvfrom(1024)
+        data = data.strip()
+        print(f"Получены данные от {addr}: {data}")
+        if data.decode() == 'ON':
+            sock.close()
+            return 1
+        else:
+            sock.close()
+            return 0
+
+    except OSError as e:
+        print("Время ожидания истекло! Данные не получены.")
+        sock.close()
+        return 0
+
+
 def send_wol(mac_address, ip='192.168.1.255'):
     # Удаляем разделители (колоны, дефисы) и переводим в байты
     cleaned_mac = re.sub(r'[:.-]', '', mac_address)
@@ -69,5 +93,21 @@ bot.register('/ping', reply_ping)
 bot.register('/boot', boot_server)
 
 print('starting bot')
-bot.listen()
+
+server_is_offline = True
+
+while True:
+    while server_is_offline:
+        print('server is offline')
+        bot.read_once()
+        if check_server_status(3.0) == 1:
+            server_is_offline = False
+        time.sleep(1)
+        gc.collect()
+    if check_server_status() == 0:
+        server_is_offline = True
+    else:
+        server_is_offline = False
+    gc.collect()
+
 
